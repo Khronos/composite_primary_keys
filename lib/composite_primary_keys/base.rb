@@ -95,7 +95,8 @@ module ActiveRecord
       # whether you name it the default 'id' or set it to something else.
       def id
         attr_names = self.class.primary_keys
-        Array.new(attr_names.map { |attr_name| read_attribute(attr_name) })
+        # Array.new(attr_names.map { |attr_name| read_attribute(attr_name) })
+	CompositePrimaryKeys::CompositeIds.new(attr_names.map { |attr_name| read_attribute(attr_name) })
       end
       alias_method :ids, :id
 
