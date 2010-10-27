@@ -27,6 +27,8 @@ lib/composite_primary_keys/reflection.rb
 lib/composite_primary_keys/relation.rb
 lib/composite_primary_keys/through_association_scope.rb
 lib/composite_primary_keys/version.rb
+lib/composite_primary_keys/validations
+lib/composite_primary_keys/validations/uniqueness.rb
 loader.rb
 local/database_connections.rb.sample
 local/paths.rb.sample
