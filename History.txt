@@ -1,3 +1,7 @@
+== 3.0.1.0
+
+* Made a change to bring dates as keys functionality back.
+
 == 3.0.0.0 2010-05-02
 
 * Port to Rails 3.0 and Ruby 1.9.2
