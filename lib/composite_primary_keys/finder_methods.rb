@@ -2,6 +2,35 @@ module CompositePrimaryKeys
   module ActiveRecord
     module FinderMethods
       module InstanceMethods
+        def construct_limited_ids_condition(relation)
+          orders = relation.order_values.join(", ")
+
+          # CPK
+          # values = @klass.connection.distinct("#{@klass.connection.quote_table_name @klass.table_name}.#{@klass.primary_key}", orders)
+
+          keys = @klass.primary_keys.map do |key|
+            "#{@klass.connection.quote_table_name @klass.table_name}.#{key}"
+          end
+          values = @klass.connection.distinct(keys.join(', '), orders)
+
+          ids_array = relation.select(values).collect {|row| row[@klass.primary_key]}
+
+          # CPK
+          # ids_array.empty? ? raise(ThrowResult) : primary_key.in(ids_array)
+
+          # OR together each and expression (key=value and key=value) that matches an id set
+          # since we only need to match 0 or more records
+          or_expressions = ids_array.map do |id_set|
+            # AND together "key=value" exprssios to match each id set
+            and_expressions = [self.primary_keys, id_set].transpose.map do |key, id|
+              table[key].eq(id)
+            end
+            Arel::Predicates::All.new(*and_expressions)
+          end
+
+          Arel::Predicates::Any.new(*or_expressions).to_sql
+        end
+        
         def exists?(id = nil)
           case id
           when Array
@@ -14,9 +43,11 @@ module CompositePrimaryKeys
           when Hash
             where(id).exists?
           else
-            relation = select(primary_key).limit(1)
             # CPK
+            #relation = select(primary_key).limit(1)
             #relation = relation.where(primary_key.eq(id)) if id
+
+            relation = select(primary_keys).limit(1)
             relation = relation.where(ids_predicate(id)) if id
             relation.first ? true : false
           end
@@ -38,12 +69,13 @@ module CompositePrimaryKeys
           end
 
           ids = [ids.to_composite_ids] if not ids.first.kind_of?(Array)
+
           ids.each do |id_set|
             unless id_set.is_a?(Array)
               raise "Ids must be in an Array, instead received: #{id_set.inspect}"
             end
             unless id_set.length == @klass.primary_keys.length
-              raise "#{id_set.inspect}: Incorrect number of primary keys for #{class_name}: #{primary_keys.inspect}"
+              raise "#{id_set.inspect}: Incorrect number of primary keys for #{@klass.name}: #{@klass.primary_keys.inspect}"
             end
           end
 

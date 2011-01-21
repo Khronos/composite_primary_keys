@@ -47,7 +47,8 @@ module ActiveRecord
 
       # CPK
       if attr_name.is_a?(Array)
-        attr_name.map {|name| read_attribute(name)}
+        values = attr_name.map {|name| read_attribute(name)}
+        CompositePrimaryKeys::CompositeKeys.new(values)
       else
         read_attribute(attr_name)
       end
@@ -86,7 +87,7 @@ module ActiveRecord
       #ids_to_s([[1,2],[7,3]]) -> "(1,2),(7,3)"
       #ids_to_s([[1,2],[7,3]], ',', ';') -> "1,2;7,3"
       def ids_to_s(many_ids, id_sep = CompositePrimaryKeys::ID_SEP, list_sep = ',', left_bracket = '(', right_bracket = ')')
-        many_ids.map {|ids| "#{left_bracket}#{ids}#{right_bracket}"}.join(list_sep)
+        many_ids.map {|ids| "#{left_bracket}#{CompositePrimaryKeys::CompositeKeys.new(ids)}#{right_bracket}"}.join(list_sep)
       end
     end
 
@@ -108,7 +109,7 @@ module ActiveRecord
       end
 
       def to_param
-        id.to_s
+        id.join(CompositePrimaryKeys::ID_SEP)
       end
 
       def id_before_type_cast #:nodoc:

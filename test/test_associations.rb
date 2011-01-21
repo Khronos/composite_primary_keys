@@ -1,20 +1,4 @@
 require 'abstract_unit'
-require 'fixtures/article'
-require 'fixtures/membership'
-require 'fixtures/product'
-require 'fixtures/tariff'
-require 'fixtures/product_tariff'
-require 'fixtures/suburb'
-require 'fixtures/street'
-require 'fixtures/restaurant'
-require 'fixtures/dorm'
-require 'fixtures/room'
-require 'fixtures/room_attribute'
-require 'fixtures/room_attribute_assignment'
-require 'fixtures/student'
-require 'fixtures/room_assignment'
-require 'fixtures/user'
-require 'fixtures/reading'
 
 class TestAssociations < ActiveSupport::TestCase
   fixtures :articles, :products, :tariffs, :product_tariffs, :suburbs, :streets, :restaurants, :restaurants_suburbs,
@@ -174,5 +158,24 @@ class TestAssociations < ActiveSupport::TestCase
     @membership = Membership.find(:first, :joins => :reading, :conditions => { :readings => { :id => 2 } })
 
     assert_equal [1, 1], @membership.id
+  end
+
+  def test_has_many_with_primary_key_with_associations
+    # Trigger Active Records find_with_associations method
+    memberships = Membership.find(:all, :include => :statuses,
+                                        :conditions => ["membership_statuses.status = ?",
+                                                        'Active'])
+
+    assert_equal(1, memberships.length)
+    assert_equal([1,1], memberships[0].id)
+  end
+
+  def test_limitable_reflections
+    memberships = Membership.find(:all, :include => :statuses,
+                                        :conditions => ["membership_statuses.status = ?",
+                                                        'Active'],
+                                        :limit => 1)
+    assert_equal(1, memberships.length)
+    assert_equal([1,1], memberships[0].id)
   end
 end
